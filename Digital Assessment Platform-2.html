@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Digital Assessment Platform</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  box-sizing:border-box;
+  --bg:#F7F9FB;--panel:#FFFFFF;--soft:#EEF2F6;--text:#1B2733;--muted:#64748B;
+  --accent:#0E7C86;--accent-soft:#DDF1F2;--on-accent:#FFFFFF;--border:#E2E8F0;
+  --good:#15803D;--good-soft:#DCFCE7;--warn:#B45309;--warn-soft:#FEF3C7;--bad:#B91C1C;--bad-soft:#FEE2E2;
+  padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0F1720;--panel:#17212C;--soft:#1F2B38;--text:#E8EEF4;--muted:#94A3B8;--accent:#2BB5C0;--accent-soft:#12383C;--on-accent:#06242A;--border:#2A3947;
+  --good:#4ADE80;--good-soft:#14301F;--warn:#FBBF24;--warn-soft:#3A2D10;--bad:#F87171;--bad-soft:#3B1A1A;}}
+:root[data-theme="dark"]{
+  --bg:#0F1720;--panel:#17212C;--soft:#1F2B38;--text:#E8EEF4;--muted:#94A3B8;--accent:#2BB5C0;--accent-soft:#12383C;--on-accent:#06242A;--border:#2A3947;
+  --good:#4ADE80;--good-soft:#14301F;--warn:#FBBF24;--warn-soft:#3A2D10;--bad:#F87171;--bad-soft:#3B1A1A;}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Manrope,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;font-size:15px;line-height:1.5}
+button{font:inherit;cursor:pointer}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.hidden{display:none!important}
+
+/* login */
+#login{min-height:100%;display:flex;align-items:center;justify-content:center;padding:24px}
+.login-card{width:100%;max-width:400px;background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:32px}
+.logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:18px;margin-bottom:24px}
+.logo i{width:32px;height:32px;border-radius:9px;background:var(--accent);color:var(--on-accent);display:grid;place-items:center;font-style:normal}
+h1{font-size:24px;margin:0 0 6px;font-weight:800}
+h2{font-size:17px;margin:0 0 12px;font-weight:800}
+.sub{color:var(--muted);margin:0 0 20px}
+label{display:block;font-size:13px;font-weight:600;margin:0 0 6px}
+input[type=email],input[type=password]{width:100%;padding:12px;border:1px solid var(--border);border-radius:10px;background:var(--soft);color:var(--text);font:inherit;margin-bottom:16px}
+
+/* buttons */
+.btn{padding:12px 18px;border-radius:10px;border:1px solid var(--border);background:var(--panel);color:var(--text);font-weight:600}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.btn.block{width:100%}
+.btn:disabled{opacity:.5;cursor:default}
+
+/* shell */
+#app{min-height:100%}
+nav{background:var(--panel);border-bottom:1px solid var(--border);padding:0 24px;display:flex;align-items:center;gap:4px;position:sticky;top:0;z-index:5;height:60px;overflow-x:auto}
+nav .logo{margin:0 20px 0 0;white-space:nowrap}
+nav button{width:auto;padding:8px 14px;border:0;border-radius:8px;background:none;color:var(--muted);font-weight:600;white-space:nowrap}
+nav button.on{background:var(--accent-soft);color:var(--accent)}
+nav button:hover:not(.on){background:var(--soft)}
+nav .spacer{flex:1}
+main{padding:32px 24px;max-width:860px;margin:0 auto;width:100%}
+.opt .r.sq{border-radius:5px}
+.opt.sel .r.sq{background:var(--accent);border-color:var(--accent)}
+.hint{font-size:13px;color:var(--muted);margin:-8px 0 14px}
+.panel{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:16px}
+.row{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.muted{color:var(--muted);font-size:13px}
+.tag{display:inline-block;font-size:12px;font-weight:600;padding:2px 10px;border-radius:99px;background:var(--soft);color:var(--muted)}
+.tag.good{background:var(--good-soft);color:var(--good)}.tag.warn{background:var(--warn-soft);color:var(--warn)}.tag.bad{background:var(--bad-soft);color:var(--bad)}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}
+.stat{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:16px}
+.stat b{display:block;font-size:26px;font-weight:800}
+
+/* test */
+.progress{height:8px;background:var(--soft);border-radius:99px;overflow:hidden;margin:8px 0 14px}
+.progress div{height:100%;background:var(--accent);transition:width .25s}
+.timer{font-variant-numeric:tabular-nums;font-weight:800}
+.timer.low{color:var(--bad)}
+.dots{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:20px}
+.dot{width:34px;height:34px;border-radius:9px;border:1px solid var(--border);background:var(--panel);color:var(--muted);font-weight:600}
+.dot.done{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+.dot.cur{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.q{font-size:19px;font-weight:800;margin:0 0 16px}
+.opt{display:flex;gap:12px;align-items:center;width:100%;text-align:left;padding:14px;border:1px solid var(--border);border-radius:12px;background:var(--panel);color:var(--text);margin-bottom:10px}
+.opt:hover{border-color:var(--accent)}
+.opt.sel{border-color:var(--accent);background:var(--accent-soft)}
+.opt .r{width:18px;height:18px;border-radius:50%;border:2px solid var(--muted);flex:none}
+.opt.sel .r{border-color:var(--accent);background:radial-gradient(var(--accent) 45%,transparent 50%)}
+.opt.ok{border-color:var(--good);background:var(--good-soft)}.opt.no{border-color:var(--bad);background:var(--bad-soft)}
+.actions{display:flex;gap:10px;margin-top:18px}
+.actions .btn{flex:1}
+
+/* results */
+.score-wrap{display:flex;align-items:center;gap:24px;flex-wrap:wrap}
+.ring{width:132px;height:132px;border-radius:50%;display:grid;place-items:center;flex:none}
+.ring span{width:100px;height:100px;border-radius:50%;background:var(--panel);display:grid;place-items:center;font-size:30px;font-weight:800}
+.bar-row{margin-bottom:14px}
+.bar{height:10px;background:var(--soft);border-radius:99px;overflow:hidden;margin-top:6px}
+.bar div{height:100%;border-radius:99px}
+.expl{font-size:13px;color:var(--muted);margin:2px 0 0}
+.rev{padding:14px 0;border-bottom:1px solid var(--border)}.rev:last-child{border:0}
+
+/* modal */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;padding:24px;z-index:10}
+.modal{background:var(--panel);border-radius:14px;padding:24px;max-width:360px;width:100%}
+.modal p{color:var(--muted);margin:0 0 18px}
+
+@media(max-width:720px){
+  nav{padding:0 12px}
+  nav .logo{display:none}
+  main{padding:20px 16px}
+  .stats{grid-template-columns:1fr}
+}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<div id="login">
+  <div class="login-card">
+    <div class="logo"><i>✓</i>Assessment</div>
+    <h1>Sign in</h1>
+    <p class="sub">Use your university account.</p>
+    <label for="em">Email</label>
+    <input id="em" type="email" value="260518@astanait.edu.kz">
+    <label for="pw">Password</label>
+    <input id="pw" type="password" value="password">
+    <button class="btn primary block" onclick="login()">Sign in</button>
+  </div>
+</div>
+
+<div id="app" class="hidden">
+  <nav aria-label="Main">
+    <div class="logo"><i>✓</i>Assessment</div>
+    <button data-v="home" onclick="show('home')">Home</button>
+    <button data-v="tests" onclick="show('tests')">Tests</button>
+    <button data-v="results" onclick="show('results')">Results</button>
+    <button data-v="skills" onclick="show('skills')">My skills</button>
+    <div class="spacer"></div>
+    <button onclick="logout()">Sign out</button>
+  </nav>
+  <main id="main"></main>
+</div>
+<div id="modal"></div>
+
+<script>
+const TOTAL_SECS = 600;
+const TEST = {id:'ict1', title:'Midterm Quiz ICT', course:'Information and Communication Technology', qs:[
+ {t:'ICT basics', q:'What is the primary focus of ICT?', o:['Information','Communication','Technology','All are the focus'], a:3, e:'ICT combines information, communication and technology.'},
+ {t:'ICT basics', m:1, q:'What are the main components of IPO?', o:['Input','Output','Internet','Process','Storage mechanism'], a:[0,1,3,4], e:'The IPO model is Input, Process, Output, plus a storage mechanism.'},
+ {t:'ICT basics', m:1, q:'From an architectural perspective, a computer system is a self-contained system that has:', o:['Mouse','Hardware','Software','Memory','Printer','Data','Communication'], a:[1,2,5,6], e:'A computer system consists of hardware, software, data and communication.'},
+ {t:'Operating systems', q:'An operating system is ...', o:['Machine code','Application software','System software','User software','Optional software (not needed)'], a:2, e:'An OS is system software that runs the computer and its programs.'},
+ {t:'Operating systems', q:'An operating system is system software that acts as an interface between the user and the computer hardware and provides common services for computer programs.', o:['True','False'], a:0, e:'This is the standard definition of an operating system.'},
+ {t:'Operating systems', q:'What does an operating system NOT interface with?', o:['System hardware (CPU, Memory)','Application software','File system','Network interface card','It interfaces with all of these components'], a:4, e:'An OS interfaces with hardware, applications, the file system and network cards.'},
+ {t:'Operating systems', q:'A single-tasking operating system ...', o:['Only allows one user logged on at a time','Allow multiple processes to run at the same time','Is the same thing as a real-time OS','Distributes or assigns single tasks to different computers','Only allows a single process or task to run at a time'], a:4, e:'Single-tasking means one process or task runs at a time.'},
+ {t:'Networks', m:1, q:'What are the three basic layers of a networking model?', o:['Physical','Virtual','Application','Transport','Connection'], a:[0,2,3], e:'The basic layers are Physical, Transport and Application.'},
+ {t:'Networks', q:'Which is NOT part of the five layers of the simplified layer model?', o:['Application','Transport','Network','Data','Physical','All of these choices make up the simplified layer model'], a:3, e:'The five layers are Physical, Data link, Network, Transport and Application. "Data" alone is not a layer.'}
+]};
+const TOPICS=['ICT basics','Operating systems','Networks'];
+let view='home', cur=0, ans={}, secs=TOTAL_SECS, tick=null, testing=false, last=null;
+let attempts=[];
+try{attempts=JSON.parse(localStorage.getItem('dap_attempts_ict')||'[]')}catch(e){}
+const $=id=>document.getElementById(id);
+const pct=(c,t)=>t?Math.round(c/t*100):0;
+const level=p=>p>=75?['Strong','good']:p>=50?['Developing','warn']:['Needs practice','bad'];
+const col=p=>p>=75?'var(--good)':p>=50?'var(--warn)':'var(--bad)';
+const isAns=i=>Array.isArray(ans[i])?ans[i].length>0:ans[i]!==undefined;
+const nAns=()=>TEST.qs.filter((_,i)=>isAns(i)).length;
+const sel=(i,k)=>Array.isArray(ans[i])?ans[i].includes(k):ans[i]===k;
+const isOk=(q,u)=>q.m?(Array.isArray(u)&&u.length===q.a.length&&q.a.every(x=>u.includes(x))):u===q.a;
+const txt=(q,u)=>q.m?(u||[]).map(k=>q.o[k]).join(', '):q.o[u];
+const right=q=>q.m?q.a.map(k=>q.o[k]).join(', '):q.o[q.a];
+function pick(k){const q=TEST.qs[cur];if(q.m){const a=ans[cur]||[];ans[cur]=a.includes(k)?a.filter(x=>x!==k):[...a,k]}else ans[cur]=k;renderTest()}
+const fmt=s=>String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');
+
+function login(){$('login').classList.add('hidden');$('app').classList.remove('hidden');show('home')}
+function logout(){$('app').classList.add('hidden');$('login').classList.remove('hidden')}
+function show(v){
+  view=v;testing=false;clearInterval(tick);
+  document.querySelectorAll('nav button[data-v]').forEach(b=>b.classList.toggle('on',b.dataset.v===v||(v==='review'&&b.dataset.v==='results')));
+  const m=$('main');
+  m.innerHTML={home:home,tests:tests,results:results,skills:skills,review:review}[v]();
+  window.scrollTo(0,0);
+}
+function modal(title,text,okLabel,okFn){
+  $('modal').innerHTML=`<div class="overlay" onclick="if(event.target===this)closeModal()"><div class="modal" role="dialog" aria-modal="true"><h2>${title}</h2><p>${text}</p><div class="actions" style="margin:0"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn primary" onclick="closeModal();${okFn}">${okLabel}</button></div></div></div>`;
+}
+function closeModal(){$('modal').innerHTML=''}
+
+/* ---------- Home ---------- */
+function home(){
+  const n=attempts.length, best=n?Math.max(...attempts.map(a=>pct(a.score,a.total))):null;
+  return `<h1>Welcome back</h1><p class="sub">Pick up where you left off.</p>
+  <div class="stats">
+    <div class="stat"><b>${n}</b><span class="muted">Tests taken</span></div>
+    <div class="stat"><b>${best===null?'—':best+'%'}</b><span class="muted">Best score</span></div>
+    <div class="stat"><b>1</b><span class="muted">Test available</span></div>
+  </div>
+  <div class="panel row"><div><h2 style="margin:0">${TEST.title}</h2><span class="muted">${TEST.qs.length} questions · 10 minutes</span></div><button class="btn primary" onclick="startTest()">Start</button></div>
+  <div class="panel row"><div><h2 style="margin:0">See your strengths</h2><span class="muted">Check which topics to practise next.</span></div><button class="btn" onclick="show('skills')">Open</button></div>`;
+}
+
+/* ---------- Tests ---------- */
+function tests(){
+  return `<h1>Tests</h1><p class="sub">Choose a test to begin.</p>
+  <div class="panel row"><div><h2 style="margin:0 0 2px">${TEST.title}</h2><span class="muted">${TEST.course} · ${TEST.qs.length} questions · 10 minutes</span></div><button class="btn primary" onclick="startTest()">Start</button></div>
+  <div class="panel row" style="opacity:.6"><div><h2 style="margin:0 0 2px">UX Research Basics</h2><span class="muted">Closed</span></div><span class="tag">Closed</span></div>`;
+}
+
+/* ---------- Test taking ---------- */
+function startTest(){cur=0;ans={};secs=TOTAL_SECS;testing=true;view='test';
+  document.querySelectorAll('nav button[data-v]').forEach(b=>b.classList.toggle('on',b.dataset.v==='tests'));
+  clearInterval(tick);tick=setInterval(()=>{secs--;const t=$('timer');if(t){t.textContent=fmt(secs);t.classList.toggle('low',secs<=60)}if(secs<=0){clearInterval(tick);submit()}},1000);
+  renderTest()}
+function renderTest(){
+  const q=TEST.qs[cur], done=nAns(), N=TEST.qs.length;
+  $('main').innerHTML=`<div class="row"><span class="muted">${TEST.title}</span><span class="timer ${secs<=60?'low':''}" id="timer">${fmt(secs)}</span></div>
+  <div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="${N}" aria-valuenow="${done}"><div style="width:${done/N*100}%"></div></div>
+  <div class="row" style="margin-bottom:12px"><b>${done} of ${N} answered</b><span class="muted">Question ${cur+1} of ${N}</span></div>
+  <div class="dots">${TEST.qs.map((_,i)=>`<button class="dot ${i===cur?'cur':isAns(i)?'done':''}" onclick="cur=${i};renderTest()" aria-label="Question ${i+1}">${i+1}</button>`).join('')}</div>
+  <div class="panel"><p class="q">${q.q}</p>
+  ${q.m?'<p class="hint">Select all that apply</p>':''}${q.o.map((o,i)=>`<button class="opt ${sel(cur,i)?'sel':''}" onclick="pick(${i})"><span class="r ${q.m?'sq':''}"></span>${o}</button>`).join('')}</div>
+  <div class="actions">
+    <button class="btn" onclick="cur--;renderTest()" ${cur===0?'disabled':''}>Back</button>
+    ${cur<N-1?`<button class="btn primary" onclick="cur++;renderTest()">Next</button>`:`<button class="btn primary" onclick="askSubmit()">Finish</button>`}
+  </div>
+  <p style="text-align:center"><button class="btn" style="border:0;background:none;color:var(--muted)" onclick="modal('Leave this test?','Your answers will not be saved.','Leave','show(\\'tests\\')')">Leave test</button></p>`;
+}
+function askSubmit(){
+  const left=TEST.qs.length-nAns();
+  modal('Submit test?',left?`${left} question${left>1?'s are':' is'} still unanswered. You cannot change answers after submitting.`:'You cannot change your answers after submitting.','Submit','submit()');
+}
+function submit(){
+  clearInterval(tick);testing=false;
+  const topics={};TOPICS.forEach(t=>topics[t]=[0,0]);
+  let score=0;
+  TEST.qs.forEach((q,i)=>{topics[q.t][1]++;if(isOk(q,ans[i])){score++;topics[q.t][0]++}});
+  last={date:new Date().toISOString(),score,total:TEST.qs.length,topics,ans:{...ans}};
+  attempts.push(last);
+  try{localStorage.setItem('dap_attempts_ict',JSON.stringify(attempts))}catch(e){}
+  show('review');
+}
+
+/* ---------- Instant result + review ---------- */
+function review(){
+  const a=last||attempts[attempts.length-1];
+  if(!a) return results();
+  const p=pct(a.score,a.total);
+  const strong=TOPICS.filter(t=>pct(...a.topics[t])>=75), weak=TOPICS.filter(t=>pct(...a.topics[t])<75);
+  return `<h1>Your result</h1><p class="sub">${TEST.title}</p>
+  <div class="panel score-wrap">
+    <div class="ring" style="background:conic-gradient(${col(p)} ${p}%,var(--soft) 0)"><span>${a.score}/${a.total}</span></div>
+    <div><h2 style="margin-bottom:4px">${p}% correct</h2>
+    <p class="muted" style="margin:0 0 8px">${strong.length?'Strong: '+strong.join(', ')+'. ':''}${weak.length?'Practise: '+weak.join(', ')+'.':'Great work on every topic.'}</p>
+    <button class="btn primary" onclick="show('skills')">See my skills</button></div>
+  </div>
+  <div class="panel"><h2>By topic</h2>${topicBars(a.topics)}</div>
+  <div class="panel"><h2>Your answers</h2>${TEST.qs.map((q,i)=>{const u=a.ans[i],ok=isOk(q,u),sk=Array.isArray(u)?!u.length:u===undefined;
+    return `<div class="rev"><div class="row"><b>${i+1}. ${q.q}</b><span class="tag ${ok?'good':'bad'}">${ok?'Correct':sk?'Skipped':'Incorrect'}</span></div>
+    <p class="muted" style="margin:6px 0 0">${sk?'No answer given.':'You answered: '+txt(q,u)}${ok?'':'<br>Correct answer: <b style="color:var(--good)">'+right(q)+'</b>'}</p><p class="expl">${q.e}</p></div>`}).join('')}</div>
+  <div class="actions"><button class="btn" onclick="show('tests')">Back to tests</button><button class="btn primary" onclick="startTest()">Try again</button></div>`;
+}
+function topicBars(tp){
+  return TOPICS.map(t=>{const [c,n]=tp[t],p=pct(c,n),[l,k]=level(p);
+    return `<div class="bar-row"><div class="row"><b>${t}</b><span class="tag ${k}">${l} · ${c}/${n}</span></div><div class="bar"><div style="width:${p}%;background:${col(p)}"></div></div></div>`}).join('');
+}
+
+/* ---------- Results history ---------- */
+function results(){
+  if(!attempts.length) return `<h1>Results</h1><p class="sub">Your finished tests appear here.</p><div class="panel"><p style="margin:0 0 12px">No results yet. Take your first test to see your score instantly.</p><button class="btn primary" onclick="startTest()">Start ${TEST.title}</button></div>`;
+  return `<h1>Results</h1><p class="sub">All your attempts, newest first.</p>`+
+  attempts.map((a,i)=>({a,i})).reverse().map(({a,i})=>{const p=pct(a.score,a.total);
+    return `<div class="panel row"><div><h2 style="margin:0">${TEST.title}</h2><span class="muted">Attempt ${i+1} · ${new Date(a.date).toLocaleDateString()}</span></div><div class="row"><span class="tag ${level(p)[1]}">${a.score}/${a.total} · ${p}%</span><button class="btn" onclick="last=attempts[${i}];show('review')">Details</button></div></div>`}).join('');
+}
+
+/* ---------- Self-assessment ---------- */
+function skills(){
+  if(!attempts.length) return `<h1>My skills</h1><p class="sub">See your strengths and weak spots by topic.</p><div class="panel"><p style="margin:0 0 12px">Take a test first. Your topic scores will show up here.</p><button class="btn primary" onclick="startTest()">Start ${TEST.title}</button></div>`;
+  const tot={};TOPICS.forEach(t=>tot[t]=[0,0]);
+  attempts.forEach(a=>TOPICS.forEach(t=>{tot[t][0]+=a.topics[t][0];tot[t][1]+=a.topics[t][1]}));
+  const ranked=TOPICS.map(t=>({t,p:pct(...tot[t])})).sort((x,y)=>y.p-x.p);
+  const strong=ranked.filter(r=>r.p>=75), weak=ranked.filter(r=>r.p<75);
+  const tip={'ICT basics':'Review what ICT covers, the IPO model and the parts of a computer system.','Operating systems':'Review what an OS is, what it interfaces with and the types of OS.','Networks':'Review the layers of the networking model.'};
+  return `<h1>My skills</h1><p class="sub">Based on ${attempts.length} attempt${attempts.length>1?'s':''}.</p>
+  <div class="panel"><h2>Topic scores</h2>${topicBars(tot)}</div>
+  <div class="stats" style="grid-template-columns:1fr 1fr">
+    <div class="stat"><span class="tag good">Strengths</span><p style="margin:10px 0 0">${strong.length?strong.map(r=>`<b>${r.t}</b> (${r.p}%)`).join('<br>'):'<span class="muted">None yet. Keep practising.</span>'}</p></div>
+    <div class="stat"><span class="tag bad">To improve</span><p style="margin:10px 0 0">${weak.length?weak.map(r=>`<b>${r.t}</b> (${r.p}%)`).join('<br>'):'<span class="muted">Nothing. Nice work!</span>'}</p></div>
+  </div>
+  <div class="panel"><h2>What to do next</h2>${weak.length?weak.map(r=>`<p style="margin:0 0 8px"><b>${r.t}:</b> ${tip[r.t]}</p>`).join(''):'<p style="margin:0">Try the test again to confirm your results.</p>'}
+  <button class="btn primary" style="margin-top:8px" onclick="startTest()">Practise again</button></div>`;
+}
+</script>
+</body>
+</html>
