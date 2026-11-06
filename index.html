@@ -35,7 +35,7 @@ h1{font-size:24px;margin:0 0 6px;font-weight:800}
 h2{font-size:17px;margin:0 0 12px;font-weight:800}
 .sub{color:var(--muted);margin:0 0 20px}
 label{display:block;font-size:13px;font-weight:600;margin:0 0 6px}
-input[type=email],input[type=password]{width:100%;padding:12px;border:1px solid var(--border);border-radius:10px;background:var(--soft);color:var(--text);font:inherit;margin-bottom:16px}
+input[type=text],input[type=email],input[type=password]{width:100%;padding:12px;border:1px solid var(--border);border-radius:10px;background:var(--soft);color:var(--text);font:inherit;margin-bottom:16px}
 
 /* buttons */
 .btn{padding:12px 18px;border-radius:10px;border:1px solid var(--border);background:var(--panel);color:var(--text);font-weight:600}
@@ -112,13 +112,19 @@ main{padding:32px 24px;max-width:860px;margin:0 auto;width:100%}
 <div id="login">
   <div class="login-card">
     <div class="logo"><i>✓</i>Assessment</div>
-    <h1>Sign in</h1>
-    <p class="sub">Use your university account.</p>
+    <h1>Регистрация</h1>
+    <p class="sub">Создайте аккаунт для сохранения результатов.</p>
+    
+    <label for="fn">Полное имя</label>
+    <input id="fn" type="text" placeholder="Али Жаксылыков">
+
     <label for="em">Email</label>
-    <input id="em" type="email" value="260518@astanait.edu.kz">
-    <label for="pw">Password</label>
-    <input id="pw" type="password" value="password">
-    <button class="btn primary block" onclick="login()">Sign in</button>
+    <input id="em" type="email" placeholder="260518@astanait.edu.kz">
+    
+    <label for="pw">Пароль</label>
+    <input id="pw" type="password" placeholder="Ваш пароль">
+    
+    <button class="btn primary block" onclick="registerUser()">Зарегистрироваться</button>
   </div>
 </div>
 
@@ -137,6 +143,41 @@ main{padding:32px 24px;max-width:860px;margin:0 auto;width:100%}
 <div id="modal"></div>
 
 <script>
+async function registerUser() {
+    const fullName = document.getElementById('fn').value;
+    const email = document.getElementById('em').value;
+    const password = document.getElementById('pw').value;
+
+    if (!fullName || !email || !password) {
+        alert("Пожалуйста, заполните все поля!");
+        return;
+    }
+
+    try {
+        const response = await fetch('http://localhost:3000/api/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                full_name: fullName,
+                email: email,
+                password_hash: password 
+            })
+        });
+
+        const data = await response.json();
+        
+        if (data.success) {
+            alert('Ура! Вы успешно зарегистрированы. Ваши данные добавлены в базу!');
+            login(); 
+        } else {
+            alert('Ошибка сервера: ' + data.error);
+        }
+    } catch (err) {
+        console.error(err);
+        alert('Не удалось связаться с сервером. Проверьте, запущен ли он в терминале.');
+    }
+}
+
 const TOTAL_SECS = 600;
 const TEST = {id:'ict1', title:'Midterm Quiz ICT', course:'Information and Communication Technology', qs:[
  {t:'ICT basics', q:'What is the primary focus of ICT?', o:['Information','Communication','Technology','All are the focus'], a:3, e:'ICT combines information, communication and technology.'},
