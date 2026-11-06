@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Digital Assessment Platform</title>
+<title>Digital Assessment Platform with AI Proctoring</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;800&display=swap" rel="stylesheet">
 <style>
@@ -16,9 +16,6 @@
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
   --bg:#0F1720;--panel:#17212C;--soft:#1F2B38;--text:#E8EEF4;--muted:#94A3B8;--accent:#2BB5C0;--accent-soft:#12383C;--on-accent:#06242A;--border:#2A3947;
   --good:#4ADE80;--good-soft:#14301F;--warn:#FBBF24;--warn-soft:#3A2D10;--bad:#F87171;--bad-soft:#3B1A1A;}}
-:root[data-theme="dark"]{
-  --bg:#0F1720;--panel:#17212C;--soft:#1F2B38;--text:#E8EEF4;--muted:#94A3B8;--accent:#2BB5C0;--accent-soft:#12383C;--on-accent:#06242A;--border:#2A3947;
-  --good:#4ADE80;--good-soft:#14301F;--warn:#FBBF24;--warn-soft:#3A2D10;--bad:#F87171;--bad-soft:#3B1A1A;}
 *{box-sizing:border-box}
 html,body{height:100%}
 body{margin:0;background:var(--bg);color:var(--text);font-family:Manrope,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;font-size:15px;line-height:1.5}
@@ -35,13 +32,14 @@ h1{font-size:24px;margin:0 0 6px;font-weight:800}
 h2{font-size:17px;margin:0 0 12px;font-weight:800}
 .sub{color:var(--muted);margin:0 0 20px}
 label{display:block;font-size:13px;font-weight:600;margin:0 0 6px}
-input[type=text],input[type=email],input[type=password]{width:100%;padding:12px;border:1px solid var(--border);border-radius:10px;background:var(--soft);color:var(--text);font:inherit;margin-bottom:16px}
+input{width:100%;padding:12px;border:1px solid var(--border);border-radius:10px;background:var(--soft);color:var(--text);font:inherit;margin-bottom:16px}
 
 /* buttons */
 .btn{padding:12px 18px;border-radius:10px;border:1px solid var(--border);background:var(--panel);color:var(--text);font-weight:600}
 .btn.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
 .btn.block{width:100%}
 .btn:disabled{opacity:.5;cursor:default}
+.auth-toggle {text-align:center; margin-top:16px; font-weight:600; color:var(--accent); cursor:pointer;}
 
 /* shell */
 #app{min-height:100%}
@@ -83,6 +81,23 @@ main{padding:32px 24px;max-width:860px;margin:0 auto;width:100%}
 .actions{display:flex;gap:10px;margin-top:18px}
 .actions .btn{flex:1}
 
+/* Proctoring Webcam Widget */
+.proctoring-cam {
+  position: fixed;
+  top: 75px;
+  right: 24px;
+  width: 140px;
+  height: 105px;
+  background: #000;
+  border: 2px solid var(--accent);
+  border-radius: 10px;
+  overflow: hidden;
+  z-index: 100;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+.proctoring-cam video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
+.proctoring-badge { position: absolute; bottom: 4px; left: 4px; background: rgba(14, 124, 134, 0.85); color: white; font-size: 9px; padding: 2px 6px; border-radius: 4px; font-weight: 700; }
+
 /* results */
 .score-wrap{display:flex;align-items:center;gap:24px;flex-wrap:wrap}
 .ring{width:132px;height:132px;border-radius:50%;display:grid;place-items:center;flex:none}
@@ -99,12 +114,9 @@ main{padding:32px 24px;max-width:860px;margin:0 auto;width:100%}
 .modal p{color:var(--muted);margin:0 0 18px}
 
 @media(max-width:720px){
-  nav{padding:0 12px}
-  nav .logo{display:none}
-  main{padding:20px 16px}
-  .stats{grid-template-columns:1fr}
+  nav{padding:0 12px} nav .logo{display:none} main{padding:20px 16px} .stats{grid-template-columns:1fr}
+  .proctoring-cam { width: 100px; height: 75px; top: 70px; right: 12px; }
 }
-@media(prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
 <body>
@@ -112,72 +124,131 @@ main{padding:32px 24px;max-width:860px;margin:0 auto;width:100%}
 <div id="login">
   <div class="login-card">
     <div class="logo"><i>✓</i>Assessment</div>
-    <h1>Регистрация</h1>
-    <p class="sub">Создайте аккаунт для сохранения результатов.</p>
+    <h1 id="authTitle">Вход</h1>
+    <p class="sub" id="authSub">Войдите, чтобы продолжить.</p>
     
-    <label for="fn">Полное имя</label>
-    <input id="fn" type="text" placeholder="Али Жаксылыков">
-
-    <label for="em">Email</label>
-    <input id="em" type="email" placeholder="260518@astanait.edu.kz">
+    <input id="fn" type="text" placeholder="Полное имя (только для регистрации)" class="hidden">
+    <input id="em" type="email" placeholder="Email (например, 260518@astanait.edu.kz)">
+    <input id="pw" type="password" placeholder="Пароль">
     
-    <label for="pw">Пароль</label>
-    <input id="pw" type="password" placeholder="Ваш пароль">
-    
-    <button class="btn primary block" onclick="registerUser()">Зарегистрироваться</button>
+    <button id="authBtn" class="btn primary block" onclick="loginUser()">Войти</button>
+    <div class="auth-toggle" onclick="toggleAuth()" id="authToggleText">Нет аккаунта? Зарегистрироваться</div>
   </div>
 </div>
 
 <div id="app" class="hidden">
   <nav aria-label="Main">
     <div class="logo"><i>✓</i>Assessment</div>
-    <button data-v="home" onclick="show('home')">Home</button>
-    <button data-v="tests" onclick="show('tests')">Tests</button>
-    <button data-v="results" onclick="show('results')">Results</button>
-    <button data-v="skills" onclick="show('skills')">My skills</button>
+    <button data-v="home" onclick="show('home')">Главная</button>
+    <button data-v="tests" onclick="show('tests')">Тесты</button>
+    <button data-v="results" onclick="show('results')">Результаты</button>
+    <button data-v="skills" onclick="show('skills')">Мои навыки</button>
     <div class="spacer"></div>
-    <button onclick="logout()">Sign out</button>
+    <span id="userNameDisplay" style="margin-right:15px; font-weight:600; font-size:13px; color:var(--muted);"></span>
+    <button onclick="logout()">Выйти</button>
   </nav>
   <main id="main"></main>
 </div>
 <div id="modal"></div>
 
+<div id="proctoringWidget" class="proctoring-cam hidden">
+  <video id="webcam" autoplay playsinline muted></video>
+  <div class="proctoring-badge">● REC / AI</div>
+</div>
+
 <script>
+// ==== 1. НАСТРОЙКИ СЕРВЕРА И АВТОРИЗАЦИИ ====
+const API_URL = 'http://localhost:3000'; // ВНИМАНИЕ: Замените это на вашу ссылку от Render позже!
+let currentUser = null; 
+let isLoginMode = true; 
+
+function toggleAuth() {
+    isLoginMode = !isLoginMode;
+    document.getElementById('authTitle').innerText = isLoginMode ? 'Вход' : 'Регистрация';
+    document.getElementById('authSub').innerText = isLoginMode ? 'Войдите, чтобы продолжить.' : 'Создайте аккаунт для сохранения результатов.';
+    document.getElementById('authBtn').innerText = isLoginMode ? 'Войти' : 'Зарегистрироваться';
+    document.getElementById('authToggleText').innerText = isLoginMode ? 'Нет аккаунта? Зарегистрироваться' : 'Уже есть аккаунт? Войти';
+    document.getElementById('fn').classList.toggle('hidden', isLoginMode);
+    document.getElementById('authBtn').onclick = isLoginMode ? loginUser : registerUser;
+}
+
 async function registerUser() {
     const fullName = document.getElementById('fn').value;
     const email = document.getElementById('em').value;
     const password = document.getElementById('pw').value;
-
-    if (!fullName || !email || !password) {
-        alert("Пожалуйста, заполните все поля!");
-        return;
-    }
+    if (!fullName || !email || !password) return alert("Заполните все поля!");
 
     try {
-        const response = await fetch('http://localhost:3000/api/register', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                full_name: fullName,
-                email: email,
-                password_hash: password 
-            })
+        const res = await fetch(`${API_URL}/api/register`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ full_name: fullName, email: email, password_hash: password })
         });
-
-        const data = await response.json();
-        
-        if (data.success) {
-            alert('Ура! Вы успешно зарегистрированы. Ваши данные добавлены в базу!');
-            login(); 
-        } else {
-            alert('Ошибка сервера: ' + data.error);
-        }
-    } catch (err) {
-        console.error(err);
-        alert('Не удалось связаться с сервером. Проверьте, запущен ли он в терминале.');
-    }
+        const data = await res.json();
+        if (data.success) { alert('Успешная регистрация!'); toggleAuth(); } 
+        else { alert('Ошибка: ' + data.error); }
+    } catch (err) { alert('Сервер недоступен. Проверьте терминал.'); }
 }
 
+async function loginUser() {
+    const email = document.getElementById('em').value;
+    const password = document.getElementById('pw').value;
+    if (!email || !password) return alert("Введите логин и пароль!");
+
+    try {
+        const res = await fetch(`${API_URL}/api/login`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: email, password_hash: password })
+        });
+        const data = await res.json();
+        if (data.success) {
+            currentUser = data.user;
+            document.getElementById('userNameDisplay').innerText = currentUser.full_name;
+            document.getElementById('login').classList.add('hidden');
+            document.getElementById('app').classList.remove('hidden');
+            show('home');
+        } else { alert('Неверный логин или пароль!'); }
+    } catch (err) { alert('Сервер недоступен. Проверьте терминал.'); }
+}
+
+function logout() {
+    stopWebcam();
+    currentUser = null;
+    document.getElementById('app').classList.add('hidden');
+    document.getElementById('login').classList.remove('hidden');
+}
+
+// ==== 2. ВЕБКАМЕРА И ПРОКТОРИНГ ====
+let mediaStream = null;
+async function startWebcam() {
+    try {
+        mediaStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+        document.getElementById('webcam').srcObject = mediaStream;
+        document.getElementById('proctoringWidget').classList.remove('hidden');
+        logProctoringEvent('webcam_started');
+    } catch (err) {
+        console.warn('Нет камеры:', err);
+        alert('Для прохождения теста необходим доступ к веб-камере.');
+    }
+}
+function stopWebcam() {
+    if (mediaStream) { mediaStream.getTracks().forEach(track => track.stop()); mediaStream = null; }
+    document.getElementById('proctoringWidget').classList.add('hidden');
+}
+async function logProctoringEvent(eventType) {
+    if (!testing && eventType !== 'webcam_started') return;
+    if (!currentUser) return;
+    console.warn('AI Proctoring Alert:', eventType);
+    try {
+        await fetch(`${API_URL}/api/proctoring`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ user_id: currentUser.user_id, event_type: eventType })
+        });
+    } catch (err) {}
+}
+document.addEventListener('visibilitychange', () => { if (document.hidden && testing) { alert('⚠️ AI Proctoring: Уход с вкладки!'); logProctoringEvent('tab_switch'); }});
+window.addEventListener('blur', () => { if (testing) logProctoringEvent('window_blur'); });
+
+// ==== 3. ЛОГИКА ТЕСТИРОВАНИЯ (ПОЛНЫЙ ТЕСТ) ====
 const TOTAL_SECS = 600;
 const TEST = {id:'ict1', title:'Midterm Quiz ICT', course:'Information and Communication Technology', qs:[
  {t:'ICT basics', q:'What is the primary focus of ICT?', o:['Information','Communication','Technology','All are the focus'], a:3, e:'ICT combines information, communication and technology.'},
@@ -207,9 +278,8 @@ const right=q=>q.m?q.a.map(k=>q.o[k]).join(', '):q.o[q.a];
 function pick(k){const q=TEST.qs[cur];if(q.m){const a=ans[cur]||[];ans[cur]=a.includes(k)?a.filter(x=>x!==k):[...a,k]}else ans[cur]=k;renderTest()}
 const fmt=s=>String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');
 
-function login(){$('login').classList.add('hidden');$('app').classList.remove('hidden');show('home')}
-function logout(){$('app').classList.add('hidden');$('login').classList.remove('hidden')}
 function show(v){
+  if(v !== 'test') { stopWebcam(); }
   view=v;testing=false;clearInterval(tick);
   document.querySelectorAll('nav button[data-v]').forEach(b=>b.classList.toggle('on',b.dataset.v===v||(v==='review'&&b.dataset.v==='results')));
   const m=$('main');
@@ -217,112 +287,120 @@ function show(v){
   window.scrollTo(0,0);
 }
 function modal(title,text,okLabel,okFn){
-  $('modal').innerHTML=`<div class="overlay" onclick="if(event.target===this)closeModal()"><div class="modal" role="dialog" aria-modal="true"><h2>${title}</h2><p>${text}</p><div class="actions" style="margin:0"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn primary" onclick="closeModal();${okFn}">${okLabel}</button></div></div></div>`;
+  $('modal').innerHTML=`<div class="overlay" onclick="if(event.target===this)closeModal()"><div class="modal" role="dialog" aria-modal="true"><h2>${title}</h2><p>${text}</p><div class="actions" style="margin:0"><button class="btn" onclick="closeModal()">Отмена</button><button class="btn primary" onclick="closeModal();${okFn}">${okLabel}</button></div></div></div>`;
 }
 function closeModal(){$('modal').innerHTML=''}
 
-/* ---------- Home ---------- */
 function home(){
   const n=attempts.length, best=n?Math.max(...attempts.map(a=>pct(a.score,a.total))):null;
-  return `<h1>Welcome back</h1><p class="sub">Pick up where you left off.</p>
+  return `<h1>С возвращением, ${currentUser ? currentUser.full_name : ''}</h1><p class="sub">Продолжите с того места, где остановились.</p>
   <div class="stats">
-    <div class="stat"><b>${n}</b><span class="muted">Tests taken</span></div>
-    <div class="stat"><b>${best===null?'—':best+'%'}</b><span class="muted">Best score</span></div>
-    <div class="stat"><b>1</b><span class="muted">Test available</span></div>
+    <div class="stat"><b>${n}</b><span class="muted">Тестов пройдено</span></div>
+    <div class="stat"><b>${best===null?'—':best+'%'}</b><span class="muted">Лучший результат</span></div>
+    <div class="stat"><b>1</b><span class="muted">Тест доступен</span></div>
   </div>
-  <div class="panel row"><div><h2 style="margin:0">${TEST.title}</h2><span class="muted">${TEST.qs.length} questions · 10 minutes</span></div><button class="btn primary" onclick="startTest()">Start</button></div>
-  <div class="panel row"><div><h2 style="margin:0">See your strengths</h2><span class="muted">Check which topics to practise next.</span></div><button class="btn" onclick="show('skills')">Open</button></div>`;
+  <div class="panel row"><div><h2 style="margin:0">${TEST.title}</h2><span class="muted">${TEST.qs.length} вопросов · 10 минут</span></div><button class="btn primary" onclick="startTest()">Начать</button></div>
+  <div class="panel row"><div><h2 style="margin:0">Оценить навыки</h2><span class="muted">Проверьте, какие темы нужно подтянуть.</span></div><button class="btn" onclick="show('skills')">Открыть</button></div>`;
 }
 
-/* ---------- Tests ---------- */
 function tests(){
-  return `<h1>Tests</h1><p class="sub">Choose a test to begin.</p>
-  <div class="panel row"><div><h2 style="margin:0 0 2px">${TEST.title}</h2><span class="muted">${TEST.course} · ${TEST.qs.length} questions · 10 minutes</span></div><button class="btn primary" onclick="startTest()">Start</button></div>
-  <div class="panel row" style="opacity:.6"><div><h2 style="margin:0 0 2px">UX Research Basics</h2><span class="muted">Closed</span></div><span class="tag">Closed</span></div>`;
+  return `<h1>Тесты</h1><p class="sub">Выберите тест для начала.</p>
+  <div class="panel row"><div><h2 style="margin:0 0 2px">${TEST.title}</h2><span class="muted">${TEST.course} · ${TEST.qs.length} вопросов · 10 минут</span></div><button class="btn primary" onclick="startTest()">Начать</button></div>`;
 }
 
-/* ---------- Test taking ---------- */
-function startTest(){cur=0;ans={};secs=TOTAL_SECS;testing=true;view='test';
+function startTest(){
+  cur=0;ans={};secs=TOTAL_SECS;testing=true;view='test';
+  startWebcam(); 
   document.querySelectorAll('nav button[data-v]').forEach(b=>b.classList.toggle('on',b.dataset.v==='tests'));
   clearInterval(tick);tick=setInterval(()=>{secs--;const t=$('timer');if(t){t.textContent=fmt(secs);t.classList.toggle('low',secs<=60)}if(secs<=0){clearInterval(tick);submit()}},1000);
-  renderTest()}
+  renderTest()
+}
 function renderTest(){
   const q=TEST.qs[cur], done=nAns(), N=TEST.qs.length;
   $('main').innerHTML=`<div class="row"><span class="muted">${TEST.title}</span><span class="timer ${secs<=60?'low':''}" id="timer">${fmt(secs)}</span></div>
   <div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="${N}" aria-valuenow="${done}"><div style="width:${done/N*100}%"></div></div>
-  <div class="row" style="margin-bottom:12px"><b>${done} of ${N} answered</b><span class="muted">Question ${cur+1} of ${N}</span></div>
-  <div class="dots">${TEST.qs.map((_,i)=>`<button class="dot ${i===cur?'cur':isAns(i)?'done':''}" onclick="cur=${i};renderTest()" aria-label="Question ${i+1}">${i+1}</button>`).join('')}</div>
+  <div class="row" style="margin-bottom:12px"><b>${done} из ${N} отвечено</b><span class="muted">Вопрос ${cur+1} из ${N}</span></div>
+  <div class="dots">${TEST.qs.map((_,i)=>`<button class="dot ${i===cur?'cur':isAns(i)?'done':''}" onclick="cur=${i};renderTest()">${i+1}</button>`).join('')}</div>
   <div class="panel"><p class="q">${q.q}</p>
-  ${q.m?'<p class="hint">Select all that apply</p>':''}${q.o.map((o,i)=>`<button class="opt ${sel(cur,i)?'sel':''}" onclick="pick(${i})"><span class="r ${q.m?'sq':''}"></span>${o}</button>`).join('')}</div>
+  ${q.m?'<p class="hint">Выберите все подходящие варианты</p>':''}${q.o.map((o,i)=>`<button class="opt ${sel(cur,i)?'sel':''}" onclick="pick(${i})"><span class="r ${q.m?'sq':''}"></span>${o}</button>`).join('')}</div>
   <div class="actions">
-    <button class="btn" onclick="cur--;renderTest()" ${cur===0?'disabled':''}>Back</button>
-    ${cur<N-1?`<button class="btn primary" onclick="cur++;renderTest()">Next</button>`:`<button class="btn primary" onclick="askSubmit()">Finish</button>`}
+    <button class="btn" onclick="cur--;renderTest()" ${cur===0?'disabled':''}>Назад</button>
+    ${cur<N-1?`<button class="btn primary" onclick="cur++;renderTest()">Вперед</button>`:`<button class="btn primary" onclick="askSubmit()">Завершить</button>`}
   </div>
-  <p style="text-align:center"><button class="btn" style="border:0;background:none;color:var(--muted)" onclick="modal('Leave this test?','Your answers will not be saved.','Leave','show(\\'tests\\')')">Leave test</button></p>`;
+  <p style="text-align:center"><button class="btn" style="border:0;background:none;color:var(--muted)" onclick="modal('Покинуть тест?','Ваши ответы не будут сохранены.','Покинуть','show(\\'tests\\')')">Прервать тест</button></p>`;
 }
 function askSubmit(){
   const left=TEST.qs.length-nAns();
-  modal('Submit test?',left?`${left} question${left>1?'s are':' is'} still unanswered. You cannot change answers after submitting.`:'You cannot change your answers after submitting.','Submit','submit()');
+  modal('Завершить тест?',left?`${left} вопрос(ов) осталось без ответа.`:'После отправки изменить ответы будет нельзя.','Отправить','submit()');
 }
-function submit(){
+
+async function submit(){
   clearInterval(tick);testing=false;
+  stopWebcam();
+  
   const topics={};TOPICS.forEach(t=>topics[t]=[0,0]);
   let score=0;
   TEST.qs.forEach((q,i)=>{topics[q.t][1]++;if(isOk(q,ans[i])){score++;topics[q.t][0]++}});
+  
   last={date:new Date().toISOString(),score,total:TEST.qs.length,topics,ans:{...ans}};
   attempts.push(last);
   try{localStorage.setItem('dap_attempts_ict',JSON.stringify(attempts))}catch(e){}
+
+  // ОТПРАВКА БАЛЛОВ В БАЗУ ДАННЫХ
+  if (currentUser) {
+      try {
+          await fetch(`${API_URL}/api/results`, {
+              method: 'POST', headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ user_id: currentUser.user_id, test_id: TEST.id, score: score })
+          });
+      } catch (err) { console.error('Ошибка сохранения результата в БД', err); }
+  }
+
   show('review');
 }
 
-/* ---------- Instant result + review ---------- */
 function review(){
   const a=last||attempts[attempts.length-1];
   if(!a) return results();
   const p=pct(a.score,a.total);
   const strong=TOPICS.filter(t=>pct(...a.topics[t])>=75), weak=TOPICS.filter(t=>pct(...a.topics[t])<75);
-  return `<h1>Your result</h1><p class="sub">${TEST.title}</p>
+  return `<h1>Ваш результат</h1><p class="sub">${TEST.title} (сохранен в базу)</p>
   <div class="panel score-wrap">
     <div class="ring" style="background:conic-gradient(${col(p)} ${p}%,var(--soft) 0)"><span>${a.score}/${a.total}</span></div>
-    <div><h2 style="margin-bottom:4px">${p}% correct</h2>
-    <p class="muted" style="margin:0 0 8px">${strong.length?'Strong: '+strong.join(', ')+'. ':''}${weak.length?'Practise: '+weak.join(', ')+'.':'Great work on every topic.'}</p>
-    <button class="btn primary" onclick="show('skills')">See my skills</button></div>
+    <div><h2 style="margin-bottom:4px">${p}% верно</h2>
+    <p class="muted" style="margin:0 0 8px">${strong.length?'Отлично: '+strong.join(', ')+'. ':''}${weak.length?'Подтянуть: '+weak.join(', ')+'.':'Прекрасная работа по всем темам.'}</p>
+    <button class="btn primary" onclick="show('skills')">Смотреть навыки</button></div>
   </div>
-  <div class="panel"><h2>By topic</h2>${topicBars(a.topics)}</div>
-  <div class="panel"><h2>Your answers</h2>${TEST.qs.map((q,i)=>{const u=a.ans[i],ok=isOk(q,u),sk=Array.isArray(u)?!u.length:u===undefined;
-    return `<div class="rev"><div class="row"><b>${i+1}. ${q.q}</b><span class="tag ${ok?'good':'bad'}">${ok?'Correct':sk?'Skipped':'Incorrect'}</span></div>
-    <p class="muted" style="margin:6px 0 0">${sk?'No answer given.':'You answered: '+txt(q,u)}${ok?'':'<br>Correct answer: <b style="color:var(--good)">'+right(q)+'</b>'}</p><p class="expl">${q.e}</p></div>`}).join('')}</div>
-  <div class="actions"><button class="btn" onclick="show('tests')">Back to tests</button><button class="btn primary" onclick="startTest()">Try again</button></div>`;
+  <div class="panel"><h2>По темам</h2>${topicBars(a.topics)}</div>
+  <div class="panel"><h2>Ваши ответы</h2>${TEST.qs.map((q,i)=>{const u=a.ans[i],ok=isOk(q,u),sk=Array.isArray(u)?!u.length:u===undefined;
+    return `<div class="rev"><div class="row"><b>${i+1}. ${q.q}</b><span class="tag ${ok?'good':'bad'}">${ok?'Верно':sk?'Пропуск':'Ошибка'}</span></div>
+    <p class="muted" style="margin:6px 0 0">${sk?'Нет ответа.':'Вы ответили: '+txt(q,u)}${ok?'':'<br>Правильный ответ: <b style="color:var(--good)">'+right(q)+'</b>'}</p><p class="expl">${q.e}</p></div>`}).join('')}</div>
+  <div class="actions"><button class="btn" onclick="show('tests')">К тестам</button><button class="btn primary" onclick="startTest()">Пройти снова</button></div>`;
 }
 function topicBars(tp){
   return TOPICS.map(t=>{const [c,n]=tp[t],p=pct(c,n),[l,k]=level(p);
     return `<div class="bar-row"><div class="row"><b>${t}</b><span class="tag ${k}">${l} · ${c}/${n}</span></div><div class="bar"><div style="width:${p}%;background:${col(p)}"></div></div></div>`}).join('');
 }
 
-/* ---------- Results history ---------- */
 function results(){
-  if(!attempts.length) return `<h1>Results</h1><p class="sub">Your finished tests appear here.</p><div class="panel"><p style="margin:0 0 12px">No results yet. Take your first test to see your score instantly.</p><button class="btn primary" onclick="startTest()">Start ${TEST.title}</button></div>`;
-  return `<h1>Results</h1><p class="sub">All your attempts, newest first.</p>`+
+  if(!attempts.length) return `<h1>Результаты</h1><p class="sub">Здесь появятся завершенные тесты.</p><div class="panel"><p style="margin:0 0 12px">Нет результатов.</p><button class="btn primary" onclick="startTest()">Начать ${TEST.title}</button></div>`;
+  return `<h1>Результаты</h1><p class="sub">Все попытки.</p>`+
   attempts.map((a,i)=>({a,i})).reverse().map(({a,i})=>{const p=pct(a.score,a.total);
-    return `<div class="panel row"><div><h2 style="margin:0">${TEST.title}</h2><span class="muted">Attempt ${i+1} · ${new Date(a.date).toLocaleDateString()}</span></div><div class="row"><span class="tag ${level(p)[1]}">${a.score}/${a.total} · ${p}%</span><button class="btn" onclick="last=attempts[${i}];show('review')">Details</button></div></div>`}).join('');
+    return `<div class="panel row"><div><h2 style="margin:0">${TEST.title}</h2><span class="muted">Попытка ${i+1} · ${new Date(a.date).toLocaleDateString()}</span></div><div class="row"><span class="tag ${level(p)[1]}">${a.score}/${a.total} · ${p}%</span><button class="btn" onclick="last=attempts[${i}];show('review')">Детали</button></div></div>`}).join('');
 }
 
-/* ---------- Self-assessment ---------- */
 function skills(){
-  if(!attempts.length) return `<h1>My skills</h1><p class="sub">See your strengths and weak spots by topic.</p><div class="panel"><p style="margin:0 0 12px">Take a test first. Your topic scores will show up here.</p><button class="btn primary" onclick="startTest()">Start ${TEST.title}</button></div>`;
+  if(!attempts.length) return `<h1>Мои навыки</h1><p class="sub">Сильные и слабые стороны.</p><div class="panel"><p style="margin:0 0 12px">Пройдите тест сначала.</p><button class="btn primary" onclick="startTest()">Начать ${TEST.title}</button></div>`;
   const tot={};TOPICS.forEach(t=>tot[t]=[0,0]);
   attempts.forEach(a=>TOPICS.forEach(t=>{tot[t][0]+=a.topics[t][0];tot[t][1]+=a.topics[t][1]}));
   const ranked=TOPICS.map(t=>({t,p:pct(...tot[t])})).sort((x,y)=>y.p-x.p);
   const strong=ranked.filter(r=>r.p>=75), weak=ranked.filter(r=>r.p<75);
-  const tip={'ICT basics':'Review what ICT covers, the IPO model and the parts of a computer system.','Operating systems':'Review what an OS is, what it interfaces with and the types of OS.','Networks':'Review the layers of the networking model.'};
-  return `<h1>My skills</h1><p class="sub">Based on ${attempts.length} attempt${attempts.length>1?'s':''}.</p>
-  <div class="panel"><h2>Topic scores</h2>${topicBars(tot)}</div>
+  return `<h1>Мои навыки</h1><p class="sub">На основе ${attempts.length} попыток.</p>
+  <div class="panel"><h2>Баллы по темам</h2>${topicBars(tot)}</div>
   <div class="stats" style="grid-template-columns:1fr 1fr">
-    <div class="stat"><span class="tag good">Strengths</span><p style="margin:10px 0 0">${strong.length?strong.map(r=>`<b>${r.t}</b> (${r.p}%)`).join('<br>'):'<span class="muted">None yet. Keep practising.</span>'}</p></div>
-    <div class="stat"><span class="tag bad">To improve</span><p style="margin:10px 0 0">${weak.length?weak.map(r=>`<b>${r.t}</b> (${r.p}%)`).join('<br>'):'<span class="muted">Nothing. Nice work!</span>'}</p></div>
-  </div>
-  <div class="panel"><h2>What to do next</h2>${weak.length?weak.map(r=>`<p style="margin:0 0 8px"><b>${r.t}:</b> ${tip[r.t]}</p>`).join(''):'<p style="margin:0">Try the test again to confirm your results.</p>'}
-  <button class="btn primary" style="margin-top:8px" onclick="startTest()">Practise again</button></div>`;
+    <div class="stat"><span class="tag good">Сильные стороны</span><p style="margin:10px 0 0">${strong.length?strong.map(r=>`<b>${r.t}</b> (${r.p}%)`).join('<br>'):'<span class="muted">Пока нет.</span>'}</p></div>
+    <div class="stat"><span class="tag bad">Нужно подтянуть</span><p style="margin:10px 0 0">${weak.length?weak.map(r=>`<b>${r.t}</b> (${r.p}%)`).join('<br>'):'<span class="muted">Всё отлично!</span>'}</p></div>
+  </div>`;
 }
 </script>
 </body>
